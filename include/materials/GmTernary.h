@@ -4,6 +4,7 @@
 #include "Material.h"
 #include "DerivativeMaterialInterface.h"
 #include <vector>
+#include <cstring>
 
 #include "pfm_sdk.h"
 #include "PanPhaseFieldArguments.h"
@@ -12,16 +13,7 @@ class GmTernary : public DerivativeMaterialInterface<Material>
 public:
   static InputParameters validParams();
   GmTernary(const InputParameters & parameters);
-  
-  vector<string> split_string(const string &s, char delim) {
-    vector<string> elems;
-    std::stringstream ss(s);
-    std::string item;
-    while (getline(ss, item, delim)) {
-        elems.push_back(item);
-    }  
-    return elems;
-  }
+  ~GmTernary();
 
 protected:
   virtual void computeQpProperties();
@@ -47,5 +39,28 @@ protected:
   MaterialProperty<Real> & _d2GdX1X1;
   MaterialProperty<Real> & _d2GdX1X2;
   MaterialProperty<Real> & _d2GdX2X2;
-  
+
+private:
+	PFM_SDK* _m_pfm_sdk;  
+  int _ncomp;
+  vector<string> split_string(const string &s, char delim) {
+    vector<string> elems;
+    std::stringstream ss(s);
+    std::string item;
+    while (getline(ss, item, delim)) {
+        elems.push_back(item);
+    }  
+    return elems;
+  }
+  double cal_d2G( PFM_SDK_Output_Data& output, int engine_id, int ic, int jc){
+    double d2G=0.0;
+    int cc = _ncomp-1;
+    auto ThF=output.phase_thermodynamic_factor[engine_id];
+    double ThF_ic_jc = ThF[ ic*_ncomp + jc];
+    double ThF_cc_cc = ThF[ cc*_ncomp + cc];
+    double ThF_ic_cc = ThF[ ic*_ncomp + cc];
+    double ThF_cc_jc = ThF[ cc*_ncomp + jc];
+    d2G = ThF_ic_jc - ThF_ic_cc - ThF_cc_jc + ThF_cc_cc;
+    return d2G;
+  }
 };

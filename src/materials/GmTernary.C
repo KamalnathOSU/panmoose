@@ -21,6 +21,16 @@ GmTernary::validParams()
   return params;
 }
 
+GmTernary::~GmTernary()
+  {
+	if(_m_pfm_sdk != NULL){
+		cout<<"Deleting PFM_SDK pointer ..."<<endl;
+		Delete_PFM_SDK( _m_pfm_sdk );
+		_m_pfm_sdk = NULL;
+	}
+	//~DerivativeMaterialInterface<Material>();
+  }
+
 GmTernary::GmTernary(const InputParameters & parameters)
   : DerivativeMaterialInterface<Material>(parameters),
     _phase_name(getParam<std::string>("phase_name")),
@@ -43,6 +53,8 @@ GmTernary::GmTernary(const InputParameters & parameters)
   _d2GdX1X2(declarePropertyDerivative<Real>("f_name", _X1_name, _X2_name)),
   _d2GdX2X2(declarePropertyDerivative<Real>("f_name", _X2_name, _X2_name))
 {
+	_m_pfm_sdk = NULL;
+	_ncomp = 0;
   using namespace std;
 //Input for PanDataNet
 PF_ARGS m_args;
@@ -88,6 +100,7 @@ int count=0; m_args.num_sdk_config=3;
 	vector<string> m_components = split_string(_elements_str,' ');
 	vector<double> avg_comp = { 0.33, 0.33, 0.34 };
 	m_wrapper-> num_comp = m_components.size();
+	_ncomp = m_components.size();
 	for(int ic=0; ic < m_wrapper-> num_comp; ic++)
 	{
 		strcpy( m_wrapper->comp_names[ic], m_components[ic].c_str() );
@@ -110,7 +123,7 @@ int count=0; m_args.num_sdk_config=3;
 	m_wrapper->therm_set_temp[1] = 900;
 	m_wrapper->num_therm_set = 2;
 
-// Set initial condition
+    // Set initial condition
 	for(int ic=0; ic< m_wrapper-> num_comp; ic++){
 		strcpy( m_wrapper->initial_condition_key[ic], m_components[ic].c_str() );
 		 m_wrapper->initial_condition_val[ic] = avg_comp[ic] ;
@@ -118,34 +131,75 @@ int count=0; m_args.num_sdk_config=3;
 	strcpy( m_wrapper->initial_condition_key[ m_wrapper->num_comp ], "T" );
 	m_wrapper->initial_condition_val[ m_wrapper->num_comp ]  = m_wrapper->therm_set_temp[0];
 
-// Analytical expression
+    // Analytical expression
 	m_wrapper->ana_expr_only = false;
 
-	PFM_SDK* m_pfm_sdk = NULL;
 	char msg_char[256]="";
 	bool calculate_parallel_tangent=false;
 	cout<<"Creating PFM_SDK pointer ..."<<endl;
-	m_pfm_sdk = Define_PFM_SDK( &m_args, calculate_parallel_tangent, msg_char);
-	cout<<"Deleting PFM_SDK pointer ..."<<endl;
-	Delete_PFM_SDK( m_pfm_sdk );
-}
+	_m_pfm_sdk = Define_PFM_SDK( &m_args, calculate_parallel_tangent, msg_char);
+	if(_m_pfm_sdk == NULL){
+	mooseError("PFM_SDK:Error: Could not create PFM_SDK pointer.",msg_char);
+	}
+	
+	// Implement composition order from input file
+	auto comp_name_protocol = _m_pfm_sdk->get_comp_name_protocol(msg_char);
+	for(int i=0; i<comp_name_protocol.num_keys;i++)
+		strcpy(comp_name_protocol.key[i], m_components[i].c_str());
+	_m_pfm_sdk->update_comp_name_protocal(&comp_name_protocol,msg_char);
+	if( !string(msg_char).empty() ){
+	string msg(msg_char);
+	mooseError("Error:PFM_SDK:comp_name_protocol: ",msg);
+	}
+}//end of constructor
 
 void
 GmTernary::computeQpProperties()
 {
+  int _thread_id=0;
+  int _engine_id=0;
+  double _Gnormal = 50e3; // J/mol
+
   Real R = 8.31442;// Gas constant
 
   Real X1 = _X1[_qp];
   Real X2 = _X2[_qp];
+  Real X3 = 1-X1-X2;
+  vector<double> conc_vector = {X1,X2,X3};
+
   Real T  = _TK[_qp];
   
-  _G[_qp] = 0;
-  
-  _dGdX1[_qp] = 0;
-  _dGdX2[_qp] = 0;
+  //Declare memory for PFM_SDK
+  PFM_SDK_Input_Condition input;
+  PFM_SDK_Output_Data output;
 
-  _d2GdX1X1[_qp] = 1;
-  _d2GdX1X2[_qp] = 1;
-  _d2GdX2X2[_qp] = 1;
+//Input
+input.TK = T;
+for (int ic = 0; ic < _ncomp ; ++ic) 
+	input.composition[ic] = conc_vector[ic];
+input.order_parameter[0] = 1;
+
+//PFM_SDK
+char msg_char[256] = ""; // message from sdk api
+_m_pfm_sdk->get_pt_val(_thread_id, _engine_id,
+				&input, &output,
+				msg_char);
+string msg(msg_char);
+if( !msg.empty() ){
+	mooseError("PFM_SDK: calculation failed. ");
+}
+
+//Free energy
+  _G[_qp] = output.phase_Gibbs_energy[0] / _Gnormal;
+
+//First derivative
+	double mu_ref=output.mu[ _ncomp - 1];
+  _dGdX1[_qp] = (output.mu[0] - mu_ref) / _Gnormal;
+  _dGdX2[_qp] = (output.mu[1] - mu_ref) / _Gnormal;
+
+//Second derivative
+  _d2GdX1X1[_qp] = cal_d2G(output,_engine_id,0,0);
+  _d2GdX1X2[_qp] = cal_d2G(output,_engine_id,0,1);;
+  _d2GdX2X2[_qp] = cal_d2G(output,_engine_id,1,1);;
  
 }
