@@ -59,6 +59,10 @@ APPLICATION_DIR    := $(CURDIR)
 APPLICATION_NAME   := panmoose
 BUILD_EXEC         := yes
 GEN_REVISION       := no
+PANPHASEFIELD_DIR := $(HOME)/linux_PanPhaseField_2024
+ADDITIONAL_CPPFLAGS += -DPANENGINE -DPANPRECIPITATION
+ADDITIONAL_INCLUDES += -I$(PANPHASEFIELD_DIR)/include -I$(PANPHASEFIELD_DIR)/PFM_SDK/api -I$(PANPHASEFIELD_DIR)/PFM_SDK/api/utility -I$(PANPHASEFIELD_DIR)/PanResult 
+ADDITIONAL_LIBS := -Wl,-rpath-link,$(PANPHASEFIELD_DIR)/lib -Wl,-rpath,$(PANPHASEFIELD_DIR)/lib -L$(PANPHASEFIELD_DIR)/lib -lPanPhaseField 
 include            $(FRAMEWORK_DIR)/app.mk
 
 ###############################################################################
