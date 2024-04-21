@@ -9,13 +9,15 @@
   [u]
   []
   [X1]
-          initial_condition=0.3
+          # x(Fe)
+          initial_condition=0.2
   []
   [X2]
-          initial_condition=0.3
+          # x(Cr)
+          initial_condition=0.6
   []
   [TK]
-          initial_condition=1000.0
+          initial_condition=973.15
   []
 []
 
