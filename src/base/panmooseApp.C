@@ -22,7 +22,7 @@ panmooseApp::~panmooseApp() {}
 void
 panmooseApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
 {
-  ModulesApp::registerAll(f, af, syntax);
+  ModulesApp::registerAllObjects<panmooseApp>(f, af, syntax);
   Registry::registerObjectsTo(f, {"panmooseApp"});
   Registry::registerActionsTo(af, {"panmooseApp"});
 
