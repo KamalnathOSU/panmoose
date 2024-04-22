@@ -32,6 +32,7 @@
    X1=X1
    X2=X2
    TK=TK
+   outputs='exodus'
    []
 []
 [Kernels]
