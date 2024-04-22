@@ -20,8 +20,10 @@ protected:
   
   const std::string & _phase_name;
   const FileName &    _database_name;
-  const std::string   _database_type;
-  const std::string   _elements_str;
+  const std::string &   _database_type;
+  const std::string &  _elements_str;
+  const Real & _Gnormal;
+  const Real & _Bnormal;
   
   const VariableValue & _X1;
   const VariableValue & _X2;

@@ -12,7 +12,8 @@ GmTernary::validParams()
   params.addParam<FileName>("database_name","FeCrNi.tdb","Name of the database file.");
   params.addParam<std::string>("database_type","tdb","Type of the database file.");
   params.addParam<std::string>("elements","Fe Cr Ni","Elements to be defined.");
-  
+  params.addParam<Real>("scale_Gnormal",1.0,"Factor (J/mol) to normalize the free energy."); 
+  params.addParam<Real>("scale_Bnormal",1.0,"Factor (S.I units) to normalize the atomic mobility."); 
   params.addParam<MaterialPropertyName>("f_name", "F", "f property name : Free energy");
   params.addRequiredCoupledVar("X1", "Molar fraction field variable 1");
   params.addRequiredCoupledVar("X2", "Molar fraction field variable 2");
@@ -37,6 +38,8 @@ GmTernary::GmTernary(const InputParameters & parameters)
 	_database_name(getParam<FileName>("database_name")),
 	_database_type(getParam<std::string>("database_type")),
 	_elements_str(getParam<std::string>("elements")),
+	_Gnormal(getParam<Real>("scale_Gnormal")),
+	_Bnormal(getParam<Real>("scale_Bnormal")),
   _X1(coupledValue("X1")),
   _X2(coupledValue("X2")),
   _TK(coupledValue("TK")),
@@ -190,16 +193,16 @@ if( !msg.empty() ){
 }
 
 //Free energy
-  _G[_qp] = output.phase_Gibbs_energy[0] ;
+  _G[_qp] = output.phase_Gibbs_energy[0] / _Gnormal ;
 
 //First derivative
-	double mu_ref=output.mu[ _ncomp - 1];
-  _dGdX1[_qp] = (output.mu[0] - mu_ref) ;
-  _dGdX2[_qp] = (output.mu[1] - mu_ref) ;
+  double mu_ref=output.mu[ _ncomp - 1];
+  _dGdX1[_qp] = (output.mu[0] - mu_ref) / _Gnormal ;
+  _dGdX2[_qp] = (output.mu[1] - mu_ref) / _Gnormal ;
 
 //Second derivative
-  _d2GdX1X1[_qp] = cal_d2G(output,_engine_id,0,0);
-  _d2GdX1X2[_qp] = cal_d2G(output,_engine_id,0,1);;
-  _d2GdX2X2[_qp] = cal_d2G(output,_engine_id,1,1);;
+  _d2GdX1X1[_qp] = cal_d2G(output,_engine_id,0,0) / _Gnormal;
+  _d2GdX1X2[_qp] = cal_d2G(output,_engine_id,0,1) / _Gnormal;
+  _d2GdX2X2[_qp] = cal_d2G(output,_engine_id,1,1) / _Gnormal;
  
 }
