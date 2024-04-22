@@ -190,12 +190,12 @@ if( !msg.empty() ){
 }
 
 //Free energy
-  _G[_qp] = output.phase_Gibbs_energy[0] / _Gnormal;
+  _G[_qp] = output.phase_Gibbs_energy[0] ;
 
 //First derivative
 	double mu_ref=output.mu[ _ncomp - 1];
-  _dGdX1[_qp] = (output.mu[0] - mu_ref) / _Gnormal;
-  _dGdX2[_qp] = (output.mu[1] - mu_ref) / _Gnormal;
+  _dGdX1[_qp] = (output.mu[0] - mu_ref) ;
+  _dGdX2[_qp] = (output.mu[1] - mu_ref) ;
 
 //Second derivative
   _d2GdX1X1[_qp] = cal_d2G(output,_engine_id,0,0);
