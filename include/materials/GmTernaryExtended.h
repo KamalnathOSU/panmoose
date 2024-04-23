@@ -5,8 +5,10 @@
 #include "DerivativeMaterialInterface.h"
 #include <vector>
 #include <cstring>
-#include "ExpressionBuilder.h"
-#include "DerivativeParsedMaterialHelper.h"
+//#include "ExpressionBuilder.h"
+//#include "DerivativeParsedMaterialHelper.h"
+
+#include "PostprocessorInterface.h"
 
 #include "pfm_sdk.h"
 #include "PanPhaseFieldArguments.h"
@@ -26,6 +28,11 @@ protected:
   const std::string &  _elements_str;
   const Real & _Gnormal;
   const Real & _Bnormal;
+
+  const PostprocessorValue & _pps_x1_avg;
+  const PostprocessorValue & _pps_x2_avg;
+  const PostprocessorValue & _pps_TK_avg;
+
   
   const VariableValue & _X1;
   const VariableValue & _X2;
@@ -49,6 +56,10 @@ protected:
   MaterialProperty<Real> & _Mob22;
 	
 private:
+  Real  _Mob1;
+  Real  _Mob2;
+  Real  _Mob3;
+  bool _initialize_mobility;
 	PFM_SDK* _m_pfm_sdk;  
   int _ncomp;
   vector<string> split_string(const string &s, char delim) {
@@ -71,4 +82,27 @@ private:
     d2G = ThF_ic_jc - ThF_ic_cc - ThF_cc_jc + ThF_cc_cc;
     return d2G;
   }
+
+void calculate_local_eq(vector<double> conc_vector, double TK, PFM_SDK_Output_Data &output) {
+
+int ncomp=conc_vector.size();
+PFM_SDK_Input_Condition input;
+  int _thread_id=0;
+  int _engine_id=0;
+//Input
+input.TK = TK;
+for (int ic = 0; ic < ncomp ; ++ic) 
+	input.composition[ic] = conc_vector[ic];
+input.order_parameter[0] = 1;
+
+//PFM_SDK
+char msg_char[256] = ""; // message from sdk api
+_m_pfm_sdk->get_pt_val(_thread_id, _engine_id,
+				&input, &output,
+				msg_char);
+string msg(msg_char);
+if( !msg.empty() ){
+	mooseError("PFM_SDK: calculation failed. ");
+}
+  }//end of calculate_local_eq
 };

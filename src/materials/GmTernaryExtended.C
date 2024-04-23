@@ -18,6 +18,9 @@ GmTernaryExtended::validParams()
   params.addRequiredCoupledVar("X1", "Molar fraction field variable 1");
   params.addRequiredCoupledVar("X2", "Molar fraction field variable 2");
   params.addRequiredCoupledVar("TK", "Temperature field");
+  params.addParam<PostprocessorName>("x1_avg",0.33,"The average of X1 concentration field.");
+  params.addParam<PostprocessorName>("x2_avg",0.33,"The average of X2 concentration field.");
+  params.addParam<PostprocessorName>("TK_avg",1000,"The average temperature of the field.");
   
   return params;
 }
@@ -40,6 +43,9 @@ GmTernaryExtended::GmTernaryExtended(const InputParameters & parameters)
 	_elements_str(getParam<std::string>("elements")),
 	_Gnormal(getParam<Real>("scale_Gnormal")),
 	_Bnormal(getParam<Real>("scale_Bnormal")),
+	_pps_x1_avg(getPostprocessorValue("x1_avg")),
+	_pps_x2_avg(getPostprocessorValue("x2_avg")),
+	_pps_TK_avg(getPostprocessorValue("TK_avg")),
   _X1(coupledValue("X1")),
   _X2(coupledValue("X2")),
   _TK(coupledValue("TK")),
@@ -61,6 +67,7 @@ GmTernaryExtended::GmTernaryExtended(const InputParameters & parameters)
 {
 	_m_pfm_sdk = NULL;
 	_ncomp = 0;
+	_initialize_mobility = false;
   using namespace std;
 //Input for PanDataNet
 PF_ARGS m_args;
@@ -163,8 +170,6 @@ int count=0; m_args.num_sdk_config=3;
 void
 GmTernaryExtended::computeQpProperties()
 {
-  int _thread_id=0;
-  int _engine_id=0;
 
   Real R = 8.31442;// Gas constant
 
@@ -172,28 +177,11 @@ GmTernaryExtended::computeQpProperties()
   Real X2 = _X2[_qp];
   Real X3 = 1-X1-X2;
   vector<double> conc_vector = {X1,X2,X3};
-
   Real T  = _TK[_qp];
   
-  //Declare memory for PFM_SDK
-  PFM_SDK_Input_Condition input;
+  //Declare memory for PFM_SDK output data
   PFM_SDK_Output_Data output;
-
-//Input
-input.TK = T;
-for (int ic = 0; ic < _ncomp ; ++ic) 
-	input.composition[ic] = conc_vector[ic];
-input.order_parameter[0] = 1;
-
-//PFM_SDK
-char msg_char[256] = ""; // message from sdk api
-_m_pfm_sdk->get_pt_val(_thread_id, _engine_id,
-				&input, &output,
-				msg_char);
-string msg(msg_char);
-if( !msg.empty() ){
-	mooseError("PFM_SDK: calculation failed. ");
-}
+  calculate_local_eq(conc_vector,T,output);
 
 //Free energy
   _G[_qp] = output.phase_Gibbs_energy[0] / _Gnormal ;
@@ -204,11 +192,32 @@ if( !msg.empty() ){
   _dGdX2[_qp] = (output.mu[1] - mu_ref) / _Gnormal ;
 
 //Second derivative
-  _d2GdX1X1[_qp] = cal_d2G(output,_engine_id,0,0) / _Gnormal;
-  _d2GdX1X2[_qp] = cal_d2G(output,_engine_id,0,1) / _Gnormal;
-  _d2GdX2X2[_qp] = cal_d2G(output,_engine_id,1,1) / _Gnormal;
- 
-	Real M1=1e-19, M2=2e-19,M3=1.5e-19;
+
+  {int engine_id=0;
+  _d2GdX1X1[_qp] = cal_d2G(output,engine_id,0,0) / _Gnormal;
+  _d2GdX1X2[_qp] = cal_d2G(output,engine_id,0,1) / _Gnormal;
+  _d2GdX2X2[_qp] = cal_d2G(output,engine_id,1,1) / _Gnormal;
+  }
+
+  if(_initialize_mobility == false){
+
+	vector<double> conc_vector = { _pps_x1_avg, _pps_x2_avg, 1.0-_pps_x1_avg-_pps_x2_avg};
+	double TK = _pps_TK_avg; 	
+    PFM_SDK_Output_Data output;
+    calculate_local_eq(conc_vector,TK,output);
+	_Mob1 = output.phase_mobility[0][0];
+	_Mob2 = output.phase_mobility[0][1];
+	_Mob3 = output.phase_mobility[0][2];
+	cout<<"Calculated global point: (x1,x2,TK) :"<<"("<<_pps_x1_avg
+												<<","<<_pps_x2_avg
+												<<","<<TK<<")"<<endl;
+	cout<<" Mobility M1 "<<_Mob1<<endl;
+	cout<<" Mobility M2 "<<_Mob2<<endl;
+	cout<<" Mobility M3 "<<_Mob3<<endl;
+	_initialize_mobility=true;
+  }
+
+	Real M1=_Mob1, M2=_Mob2, M3=_Mob3;
 	
 	_Mob11[_qp] = X1*M1*(1-X1)*(1-X1) + X2*M2*(0-X1)*(0-X1) + (1.0-X1-X2)*M3*(0-X1)*(0-X1);
 	_Mob12[_qp] = X1*M1*(1-X1)*(0-X2) + X2*M2*(0-X1)*(1-X2) + (1.0-X1-X2)*M3*(0-X1)*(0-X2);
