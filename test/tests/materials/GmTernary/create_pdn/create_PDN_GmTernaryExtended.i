@@ -1,8 +1,8 @@
 [Mesh]
   type = GeneratedMesh
   dim = 2
-  nx = 10
-  ny = 10
+  nx = 5
+  ny = 5
 []
 
 [Variables]
@@ -33,6 +33,9 @@
    X2=X2
    TK=TK
    outputs='exodus'
+   x1_avg=x1_avg
+   x2_avg=x2_avg
+   TK_avg=TK_avg
    []
 []
 [Kernels]
@@ -75,6 +78,24 @@
   solve_type = 'PJFNK'
   petsc_options_iname = '-pc_type -pc_hypre_type'
   petsc_options_value = 'hypre boomeramg'
+[]
+
+[Postprocessors]
+        [./x1_avg]
+                type = ElementAverageValue
+                execute_on = 'INITIAL TIMESTEP_END'
+                variable = X1
+        [../]
+        [./x2_avg]
+                type = ElementAverageValue
+                execute_on = 'INITIAL TIMESTEP_END'
+                variable = X2
+        [../]
+        [./TK_avg]
+                type = ElementAverageValue
+                execute_on = 'INITIAL TIMESTEP_END'
+                variable = TK
+        [../]
 []
 
 [Outputs]
