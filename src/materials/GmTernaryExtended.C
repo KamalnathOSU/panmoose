@@ -14,6 +14,9 @@ GmTernaryExtended::validParams()
   params.addParam<std::string>("elements","Fe Cr Ni","Elements to be defined.");
   params.addParam<Real>("scale_Gnormal",1.0,"Factor (J/mol) to normalize the free energy."); 
   params.addParam<Real>("scale_Bnormal",1.0,"Factor (S.I units) to normalize the atomic mobility."); 
+  params.addParam<Real>("scale_Vm",1.0,"Molar volume");
+  params.addParam<Real>("scale_lo",1.0,"Normalization length (m) ; Grid size");
+  params.addParam<Real>("kappa",11.25e-9,"Gradient energy coefficient (J/m)");
   params.addParam<MaterialPropertyName>("f_name", "F", "f property name : Free energy");
   params.addRequiredCoupledVar("X1", "Molar fraction field variable 1");
   params.addRequiredCoupledVar("X2", "Molar fraction field variable 2");
@@ -43,6 +46,9 @@ GmTernaryExtended::GmTernaryExtended(const InputParameters & parameters)
 	_elements_str(getParam<std::string>("elements")),
 	_Gnormal(getParam<Real>("scale_Gnormal")),
 	_Bnormal(getParam<Real>("scale_Bnormal")),
+	_Vm(getParam<Real>("scale_Vm")),
+	_lo(getParam<Real>("scale_lo")),
+	_kappa(getParam<Real>("kappa")),
 	_pps_x1_avg(getPostprocessorValue("x1_avg")),
 	_pps_x2_avg(getPostprocessorValue("x2_avg")),
 	_pps_TK_avg(getPostprocessorValue("TK_avg")),
@@ -63,7 +69,9 @@ GmTernaryExtended::GmTernaryExtended(const InputParameters & parameters)
   _d2GdX2X2(declarePropertyDerivative<Real>("f_name", _X2_name, _X2_name)),
   _Mob11(declareProperty<Real>("mobility11")),
   _Mob12(declareProperty<Real>("mobility12")),
-  _Mob22(declareProperty<Real>("mobility22"))
+  _Mob22(declareProperty<Real>("mobility22")),
+  _kappa1_c(declareProperty<Real>("kappa1_c")),
+  _kappa2_c(declareProperty<Real>("kappa2_c"))
 {
 	_m_pfm_sdk = NULL;
 	_ncomp = 0;
@@ -165,6 +173,19 @@ int count=0; m_args.num_sdk_config=3;
 	mooseError("Error:PFM_SDK:comp_name_protocol: ",msg);
 	}
 
+	vector<double> conc_vector = { _pps_x1_avg, _pps_x2_avg, 1.0-_pps_x1_avg-_pps_x2_avg};
+	double TK = _pps_TK_avg; 	
+    PFM_SDK_Output_Data output;
+    calculate_local_eq(conc_vector,TK,output);
+	_Mob1 = output.phase_mobility[0][0];
+	_Mob2 = output.phase_mobility[0][1];
+	_Mob3 = output.phase_mobility[0][2];
+	cout<<"Calculated global point: (x1,x2,TK) :"<<"("<<_pps_x1_avg
+												<<","<<_pps_x2_avg
+												<<","<<TK<<")"<<endl;
+	cout<<" Mobility M1 "<<_Mob1<<endl;
+	cout<<" Mobility M2 "<<_Mob2<<endl;
+	cout<<" Mobility M3 "<<_Mob3<<endl;
 }//end of constructor
 
 void
@@ -199,28 +220,15 @@ GmTernaryExtended::computeQpProperties()
   _d2GdX2X2[_qp] = cal_d2G(output,engine_id,1,1) / _Gnormal;
   }
 
-  if(_initialize_mobility == false){
-
-	vector<double> conc_vector = { _pps_x1_avg, _pps_x2_avg, 1.0-_pps_x1_avg-_pps_x2_avg};
-	double TK = _pps_TK_avg; 	
-    PFM_SDK_Output_Data output;
-    calculate_local_eq(conc_vector,TK,output);
-	_Mob1 = output.phase_mobility[0][0];
-	_Mob2 = output.phase_mobility[0][1];
-	_Mob3 = output.phase_mobility[0][2];
-	cout<<"Calculated global point: (x1,x2,TK) :"<<"("<<_pps_x1_avg
-												<<","<<_pps_x2_avg
-												<<","<<TK<<")"<<endl;
-	cout<<" Mobility M1 "<<_Mob1<<endl;
-	cout<<" Mobility M2 "<<_Mob2<<endl;
-	cout<<" Mobility M3 "<<_Mob3<<endl;
-	_initialize_mobility=true;
-  }
-
+// Chemical mobility
 	Real M1=_Mob1, M2=_Mob2, M3=_Mob3;
 	
 	_Mob11[_qp] = X1*M1*(1-X1)*(1-X1) + X2*M2*(0-X1)*(0-X1) + (1.0-X1-X2)*M3*(0-X1)*(0-X1);
 	_Mob12[_qp] = X1*M1*(1-X1)*(0-X2) + X2*M2*(0-X1)*(1-X2) + (1.0-X1-X2)*M3*(0-X1)*(0-X2);
 	_Mob22[_qp] = X1*M1*(0-X2)*(0-X2) + X2*M2*(1-X2)*(1-X2) + (1.0-X1-X2)*M3*(0-X2)*(0-X2);
 	
+//Gradient energy coefficient
+	_kappa1_c[_qp] = _kappa * _Vm / ( _Gnormal * _lo * _lo);
+	_kappa2_c[_qp] = _kappa * _Vm / ( _Gnormal * _lo * _lo); 
+
 }

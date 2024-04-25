@@ -28,6 +28,9 @@ protected:
   const std::string &  _elements_str;
   const Real & _Gnormal;
   const Real & _Bnormal;
+  const Real & _Vm;
+  const Real & _lo;
+  const Real & _kappa;
 
   const PostprocessorValue & _pps_x1_avg;
   const PostprocessorValue & _pps_x2_avg;
@@ -54,6 +57,8 @@ protected:
   MaterialProperty<Real> & _Mob11;
   MaterialProperty<Real> & _Mob12;
   MaterialProperty<Real> & _Mob22;
+  MaterialProperty<Real> & _kappa1_c;
+  MaterialProperty<Real> & _kappa2_c;
 	
 private:
   Real  _Mob1;
