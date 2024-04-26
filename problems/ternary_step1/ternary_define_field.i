@@ -5,9 +5,10 @@
 lo='3e-9' # meter
 xFe_avg=0.2
 xCr_avg=0.6
+Temperature=973.15
 Gnormal='50e3' # J/mol
-Bnormal='1e-20' # mol.m^2/(s.J)
-tao=${fparse lo*lo/Gnormal/Bnormal} # sec
+Bnormal='1e-24' # mol.m^2/(s.J)
+Vm='1e-5' # m^3/mol
 [Mesh]
   type = GeneratedMesh
   dim = 2
@@ -28,6 +29,9 @@ tao=${fparse lo*lo/Gnormal/Bnormal} # sec
   [./w1]
   [../]
   [./w2]
+  [../]
+  [./TK]
+          initial_condition = ${Temperature}
   [../]
 []
 
@@ -52,39 +56,39 @@ tao=${fparse lo*lo/Gnormal/Bnormal} # sec
   [./c1_res]
     type = SplitCHParsed
     variable = c1
-    f_name = F
-    kappa_name = kappa_c
+    f_name = 'F'
+    kappa_name = 'kappa1_c'
     w = w1
   [../]
   [./w11_res]
     type = SplitCHWRes
     variable = w1
-    mob_name = M11
+    mob_name = 'mobility11'
   [../]
   [./w12_res]
     type = SplitCHWRes
     variable = w1
     w = w2
-    mob_name = M12
+    mob_name = 'mobility12'
   [../]
 
   [./c2_res]
     type = SplitCHParsed
     variable = c2
-    f_name = F
-    kappa_name = kappa_c
+    f_name = 'F'
+    kappa_name = 'kappa2_c'
     w = w2
   [../]
   [./w22_res]
     type = SplitCHWRes
     variable = w2
-    mob_name = M22
+    mob_name = 'mobility22'
   [../]
   [./w21_res]
     type = SplitCHWRes
     variable = w2
     w = w1
-    mob_name = M21
+    mob_name = 'mobility12'
   [../]
 
   [./time1]
@@ -97,23 +101,32 @@ tao=${fparse lo*lo/Gnormal/Bnormal} # sec
     variable = w2
     v = c2
   [../]
+  [./TK_evo]
+    type = TimeDerivative
+    variable = TK
+  [../]
 []
 
 [Materials]
-  [./pfmobility]
-    type = GenericConstantMaterial
-    prop_names  = 'M11 M12 M21 M22 kappa_c'
-    prop_values = '10  2.5 20  5   40'
-  [../]
-
-  [./free_energy]
-    # equivalent to `MathFreeEnergy`
-    type = DerivativeParsedMaterial
-    property_name = F
-    coupled_variables = 'c1 c2'
-    expression = '0.25*(1+c1)^2*(1-c1)^2 + 0.25*(1+c2)^2*(1-c2)^2'
-    derivative_order = 2
-  [../]
+   [./free_energy]
+   type=GmTernaryExtended
+   phase_name='Fcc'
+   database_name='FeCrNi.tdb'
+   database_type='tdb'
+   elements='Fe Cr Ni'
+   f_name='F'
+   X1=c1
+   X2=c2
+   TK=TK
+   outputs='exodus'
+   x1_avg=${xFe_avg}
+   x2_avg=${xCr_avg}
+   TK_avg=${Temperature}
+   scale_Gnormal = ${Gnormal}  # J/mol
+   scale_Bnormal = ${Bnormal}  # mol.m^2/(J.s)
+   scale_Vm      = ${Vm} # m^3/mol
+   scale_lo      = ${lo} # m 
+   [../]
 []
 
 [Preconditioning]
@@ -138,7 +151,7 @@ tao=${fparse lo*lo/Gnormal/Bnormal} # sec
   start_time = 0.0
   num_steps = 10
 
-  dt = 10
+  dt = '1e-10'
 []
 
 [Outputs]
