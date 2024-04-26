@@ -223,10 +223,13 @@ GmTernaryExtended::computeQpProperties()
 // Chemical mobility
 	Real M1=_Mob1, M2=_Mob2, M3=_Mob3;
 	
-	_Mob11[_qp] = X1*M1*(1-X1)*(1-X1) + X2*M2*(0-X1)*(0-X1) + (1.0-X1-X2)*M3*(0-X1)*(0-X1);
-	_Mob12[_qp] = X1*M1*(1-X1)*(0-X2) + X2*M2*(0-X1)*(1-X2) + (1.0-X1-X2)*M3*(0-X1)*(0-X2);
-	_Mob22[_qp] = X1*M1*(0-X2)*(0-X2) + X2*M2*(1-X2)*(1-X2) + (1.0-X1-X2)*M3*(0-X2)*(0-X2);
+	_Mob11[_qp] = 1/_Vm*( X1*M1*(1-X1)*(1-X1) + X2*M2*(0-X1)*(0-X1) + (1.0-X1-X2)*M3*(0-X1)*(0-X1) );
+	_Mob12[_qp] = 1/_Vm*( X1*M1*(1-X1)*(0-X2) + X2*M2*(0-X1)*(1-X2) + (1.0-X1-X2)*M3*(0-X1)*(0-X2) );
+	_Mob22[_qp] = 1/_Vm*( X1*M1*(0-X2)*(0-X2) + X2*M2*(1-X2)*(1-X2) + (1.0-X1-X2)*M3*(0-X2)*(0-X2) );
 	
+	_Mob11[_qp] *= _Vm / _Bnormal;
+	_Mob12[_qp] *= _Vm / _Bnormal;
+	_Mob22[_qp] *= _Vm / _Bnormal;
 //Gradient energy coefficient
 	_kappa1_c[_qp] = _kappa * _Vm / ( _Gnormal * _lo * _lo);
 	_kappa2_c[_qp] = _kappa * _Vm / ( _Gnormal * _lo * _lo); 
