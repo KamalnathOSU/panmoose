@@ -1,0 +1,181 @@
+$  case_sensitive 
+$  database_version FeCrNi
+$  assessment (Cr,Fe) 10 !
+$  assessment (Cr,Ni) 10 !
+$  assessment (Fe,Ni) 10 !
+
+Element         /-          ELECTRON_GAS         0         0         0 !
+Element         Cr                   Bcc    51.996      4050     23.54 !
+Element         Fe                   Bcc    55.847      4489     27.28 !
+Element         Ni                   Fcc    58.693      4787    29.796 !
+Element         Va                VACUUM         0         0         0 !
+
+
+Function GHSERCR 298.15   -8856.94+157.48*T-26.908*T*ln(T)+0.00189435*T**2-1.47721e-06*T**3+139250*T**(-1); 2180 Y
+    +0.134225-34869.344+344.18*T-50*T*ln(T)-2.88526e+32*T**(-9); 6000 N !
+Function GFCCCR 298.15   +7284+0.163*T+GHSERCR; 6000 N !
+Function GHCPCR 298.15   +4438+GHSERCR; 6000 N !
+Function GLIQCR 298.15   +15483.015+146.059775*T-26.908*T*ln(T)+0.00189435*T**2-1.47721e-006*T**3+139250*T**(-1)+2.37615e-021*T**7; 2180 Y
+    -0.000818834-16459.984+335.616316*T-50*T*ln(T); 6000 N !
+Function GHSERFE 298.15   +1225.7+124.134*T-23.5143*T*ln(T)-0.00439752*T**2-5.8927e-008*T**3+77359*T**(-1); 1811 Y
+    +0.00608092-25383.581+299.31255*T-46*T*ln(T)+2.2960305e+31*T**(-9); 6000 N !
+Function GFCCFE 298.15   -1462.4+8.282*T-1.15*T*ln(T)+6.4e-04*T**2+GHSERFE; 1811 Y
+    +0.00304023-27097.396+300.25256*T-46*T*ln(T)+2.78854e+31*T**(-9); 6000 N !
+Function GHCPFE 298.15   -3705.78+12.591*T-1.15*T*ln(T)+6.4e-04*T**2+GHSERFE; 1811 Y
+    -0.904541-3957.199+5.24951*T+4.925095e+30*T**(-9)+GHSERFE; 6000 N !
+Function GLIQFE 298.15   +0.020289+12040.17-6.55843*T-3.6751551e-021*T**7+GHSERFE; 1811 Y
+    +14544.751-8.01055*T-2.2960305e+31*T**(-9)+GHSERFE; 6000 N !
+Function GHSERNI 298.15   -5179.159+117.854*T-22.096*T*ln(T)-0.0048407*T**2; 1728 Y
+    -0.000384667-27840.655+279.135*T-43.1*T*ln(T)+1.12754e+31*T**(-9); 6000 N !
+Function GBCCNI 298.15   +8715.084-3.556*T+GHSERNI; 6000 N !
+Function GHCPNI 298.15   +1046+1.2552*T+GHSERNI; 6000 N !
+Function GLIQNI 298.15   +16414.686-9.397*T-3.82318e-021*T**7+GHSERNI; 1728 Y
+    -0.0796717+18290.88-10.537*T-1.12754e+31*T**(-9)+GHSERNI; 3000 N !
+
+Type_Definition a GES AMEND_PHASE_DESCRIPTION Fcc MAGNETIC -3 0.28 !
+Type_Definition b GES AMEND_PHASE_DESCRIPTION Hcp MAGNETIC -3 0.28 !
+Type_Definition d GES AMEND_PHASE_DESCRIPTION Bcc MAGNETIC -1 0.4 !
+
+Default_Command DEF_SYS_ELEMENT Va !
+
+Phase Liquid % 1 1 !
+Constituent Liquid :Cr,Fe,Ni:!
+    Parameter G(Liquid,Cr;0) 298.15   +GLIQCR; 6000 N !
+    Parameter G(Liquid,Fe;0) 298.15   +GLIQFE; 6000 N !
+    Parameter G(Liquid,Ni;0) 298.15   +GLIQNI; 3000 N !
+    Parameter G(Liquid,Cr,Fe;0) 298.15   -17737+7.996546*T; 6000 N !
+    Parameter G(Liquid,Cr,Fe;1) 298.15   -1331; 6000 N !
+    Parameter G(Liquid,Cr,Ni;0) 298.15   +318-7.3318*T; 6000 N !
+    Parameter G(Liquid,Cr,Ni;1) 298.15   +16941-6.3696*T; 6000 N !
+    Parameter G(Liquid,Fe,Ni;0) 298.15   -18379+6.03912*T; 6000 N !
+    Parameter G(Liquid,Fe,Ni;1) 298.15   +9228-3.54642*T; 6000 N !
+    Parameter G(Liquid,Cr,Fe,Ni;0) 298.15   +36583; 6000 N !
+    Parameter G(Liquid,Cr,Fe,Ni;1) 298.15   +13254; 6000 N !
+    Parameter G(Liquid,Cr,Fe,Ni;2) 298.15   -10018; 6000 N !
+
+Phase Bcc %d 2 1 3 !
+Constituent Bcc :Cr,Fe,Ni:Va:!
+    Parameter G(Bcc,Cr:Va;0) 298.15   +GHSERCR; 6000 N !
+    Parameter G(Bcc,Fe:Va;0) 298.15   +GHSERFE; 6000 N !
+    Parameter G(Bcc,Ni:Va;0) 298.15   +GBCCNI; 3000 N !
+    Parameter G(Bcc,Cr,Fe:Va;0) 298.15   +20500-9.68*T; 6000 N !
+    Parameter G(Bcc,Cr,Ni:Va;0) 298.15   +17170-11.8199*T; 6000 N !
+    Parameter G(Bcc,Cr,Ni:Va;1) 298.15   +34418-11.8577*T; 6000 N !
+    Parameter G(Bcc,Fe,Ni:Va;0) 298.15   -956.63-1.28726*T; 6000 N !
+    Parameter G(Bcc,Fe,Ni:Va;1) 298.15   +1789.03-1.92912*T; 6000 N !
+    Parameter G(Bcc,Cr,Fe,Ni:Va;0) 298.15   -2500+2*T; 6000 N !
+    Parameter BMAGN(Bcc,Cr:Va;0) 298.15   -0.01; 6000 N !
+    Parameter BMAGN(Bcc,Fe:Va;0) 298.15   +2.22; 6000 N !
+    Parameter BMAGN(Bcc,Ni:Va;0) 298.15   +0.85; 6000 N !
+    Parameter BMAGN(Bcc,Cr,Fe:Va;0) 298.15   -0.85; 6000 N !
+    Parameter BMAGN(Bcc,Cr,Ni:Va;0) 298.15   +4; 6000 N !
+    Parameter TC(Bcc,Cr:Va;0) 298.15   -311.5; 6000 N !
+    Parameter TC(Bcc,Ni:Va;0) 298.15   +575; 6000 N !
+    Parameter TC(Bcc,Fe:Va;0) 298.15   +1043; 6000 N !
+    Parameter TC(Bcc,Cr,Fe:Va;0) 298.15   +1650; 6000 N !
+    Parameter TC(Bcc,Cr,Fe:Va;1) 298.15   +550; 6000 N !
+    Parameter TC(Bcc,Cr,Ni:Va;0) 298.15   +2373; 6000 N !
+    Parameter TC(Bcc,Cr,Ni:Va;1) 298.15   +617; 6000 N !
+    Parameter MQ(Bcc&Cr,Cr:Va;0) 298.15      -407000-35.6*T; 6000 N !
+    Parameter MQ(Bcc&Cr,Fe:Va;0) 298.15      -218000+R*T*LN(8.5E-5); 6000 N !
+    Parameter MQ(Bcc&Cr,Ni:Va;0) 298.15      -218000+R*T*LN(8.5E-5); 6000 N !
+    Parameter MQ(Bcc&Fe,Cr:Va;0) 298.15      -407000-17.2*T; 6000 N !
+    Parameter MQ(Bcc&Fe,Fe:Va;0) 298.15      -343036.59+R*T*LN(15); 1185 Y   -218000+0.000915916-83*T; 6000 N !
+    Parameter MQ(Bcc&Fe,Ni:Va;0) 298.15      -218000+R*T*LN(4.6E-5); 6000 N !
+    Parameter MQ(Bcc&Ni,Cr:Va;0) 298.15      -407000-17.2*T; 6000 N !
+    Parameter MQ(Bcc&Ni,Fe:Va;0) 298.15      -259200+R*T*LN(4.3E-4); 6000 N !
+    Parameter MQ(Bcc&Ni,Ni:Va;0) 298.15      -204000-90.8*T; 6000 N !
+    Parameter MQ(Bcc&Cr,Cr,Fe:Va;0) 298.15      361000-116*T; 6000 N !
+    Parameter MQ(Bcc&Cr,Cr,Fe:Va;1) 298.15      2820+37.5*T; 6000 N !
+    Parameter MQ(Bcc&Cr,Cr,Ni:Va;0) 298.15      350000; 6000 N !
+    Parameter MQ(Bcc&Cr,Fe,Ni:Va;0) 298.15      150000; 6000 N !
+    Parameter MQ(Bcc&Cr,Cr,Fe,Ni:Va;1) 298.15      -2400000; 6000 N !
+    Parameter MQ(Bcc&Fe,Cr,Fe:Va;0) 298.15      267000-117*T; 6000 N !
+    Parameter MQ(Bcc&Fe,Cr,Fe:Va;1) 298.15      -416000+348*T; 6000 N !
+    Parameter MQ(Bcc&Fe,Cr,Ni:Va;0) 298.15      350000; 6000 N !
+    Parameter MQ(Bcc&Fe,Fe,Ni:Va;0) 298.15      150000; 6000 N !
+    Parameter MQ(Bcc&Fe,Cr,Fe,Ni:Va;1) 298.15      -1400000; 6000 N !
+    Parameter MQ(Bcc&Ni,Cr,Fe:Va;0) 298.15      -88000+10*T; 6000 N !
+    Parameter MQ(Bcc&Ni,Cr,Ni:Va;0) 298.15      350000; 6000 N !
+    Parameter MQ(Bcc&Ni,Fe,Ni:Va;0) 298.15      150000; 6000 N !
+    Parameter MQ(Bcc&Ni,Cr,Fe,Ni:Va;1) 298.15      -500000; 6000 N !
+
+Phase Fcc %a 2 1 1 !
+Constituent Fcc :Cr,Fe,Ni:Va:!
+    Parameter G(Fcc,Cr:Va;0) 298.15   +GFCCCR; 6000 N !
+    Parameter G(Fcc,Fe:Va;0) 298.15   +GFCCFE; 6000 N !
+    Parameter G(Fcc,Ni:Va;0) 298.15   +GHSERNI; 3000 N !
+    Parameter G(Fcc,Cr,Fe:Va;0) 298.15   +10833-7.477*T; 6000 N !
+    Parameter G(Fcc,Cr,Fe:Va;1) 298.15   +1410; 6000 N !
+    Parameter G(Fcc,Cr,Ni:Va;0) 298.15   +8030-12.8801*T; 6000 N !
+    Parameter G(Fcc,Cr,Ni:Va;1) 298.15   +33080-16.0362*T; 6000 N !
+    Parameter G(Fcc,Fe,Ni:Va;0) 298.15   -12054.355+3.27413*T; 6000 N !
+    Parameter G(Fcc,Fe,Ni:Va;1) 298.15   +11082.13-4.45077*T; 6000 N !
+    Parameter G(Fcc,Fe,Ni:Va;2) 298.15   -725.805174; 6000 N !
+    Parameter G(Fcc,Cr,Fe,Ni:Va;0) 298.15   +17000-10*T; 6000 N !
+    Parameter BMAGN(Fcc,Cr:Va;0) 298.15   -2.46; 6000 N !
+    Parameter BMAGN(Fcc,Fe:Va;0) 298.15   -2.1; 6000 N !
+    Parameter BMAGN(Fcc,Ni:Va;0) 298.15   +0.52; 6000 N !
+    Parameter BMAGN(Fcc,Cr,Ni:Va;0) 298.15   -1.91; 6000 N !
+    Parameter BMAGN(Fcc,Fe,Ni:Va;0) 298.15   +9.55; 6000 N !
+    Parameter BMAGN(Fcc,Fe,Ni:Va;1) 298.15   +7.23; 6000 N !
+    Parameter BMAGN(Fcc,Fe,Ni:Va;2) 298.15   +5.93; 6000 N !
+    Parameter BMAGN(Fcc,Fe,Ni:Va;3) 298.15   +6.18; 6000 N !
+    Parameter TC(Fcc,Cr:Va;0) 298.15   -1109; 6000 N !
+    Parameter TC(Fcc,Fe:Va;0) 298.15   -201; 6000 N !
+    Parameter TC(Fcc,Ni:Va;0) 298.15   +633; 6000 N !
+    Parameter TC(Fcc,Cr,Ni:Va;0) 298.15   -3605; 6000 N !
+    Parameter TC(Fcc,Fe,Ni:Va;0) 298.15   +2133; 6000 N !
+    Parameter TC(Fcc,Fe,Ni:Va;1) 298.15   -682; 6000 N !
+    Parameter MQ(Fcc&Cr,Cr:Va;0) 298.15      -235000-82*T; 6000 N !
+    Parameter MQ(Fcc&Cr,Fe:Va;0) 298.15      -286000-71.9*T; 6000 N !
+    Parameter MQ(Fcc&Cr,Ni:Va;0) 298.15      -287000-64.4*T; 6000 N !
+    Parameter MQ(Fcc&Fe,Cr:Va;0) 298.15      -235000-82*T; 6000 N !
+    Parameter MQ(Fcc&Fe,Fe:Va;0) 298.15      -286000+R*T*LN(7.0E-5); 6000 N !
+    Parameter MQ(Fcc&Fe,Ni:Va;0) 298.15      -287000-67.5*T; 6000 N !
+    Parameter MQ(Fcc&Ni,Cr:Va;0) 298.15      -235000-82*T; 6000 N !
+    Parameter MQ(Fcc&Ni,Fe:Va;0) 298.15      -286000-86*T; 6000 N !
+    Parameter MQ(Fcc&Ni,Ni:Va;0) 298.15      -287000-69.8*T; 6000 N !
+    Parameter MQ(Fcc&Cr,Cr,Fe:Va;0) 298.15      -105000; 6000 N !
+    Parameter MQ(Fcc&Fe,Cr,Fe:Va;0) 298.15      +15900; 6000 N !
+    Parameter MQ(Fcc&Cr,Fe,Ni:Va;0) 298.15      +16100; 6000 N !
+    Parameter MQ(Fcc&Cr,Cr,Fe,Ni:Va;0) 298.15      +310000; 6000 N !
+    Parameter MQ(Fcc&Cr,Cr,Fe,Ni:Va;1) 298.15      +320000; 6000 N !
+    Parameter MQ(Fcc&Cr,Cr,Fe,Ni:Va;2) 298.15      +120000; 6000 N !
+    Parameter MQ(Fcc&Fe,Cr,Ni:Va;0) 298.15      -77500; 6000 N !
+    Parameter MQ(Fcc&Fe,Cr,Fe,Ni:Va;0) 298.15      -740000; 6000 N !
+    Parameter MQ(Fcc&Fe,Cr,Fe,Ni:Va;1) 298.15      -540000; 6000 N !
+    Parameter MQ(Fcc&Fe,Cr,Fe,Ni:Va;2) 298.15      +467300-150*T; 6000 N !
+    Parameter MQ(Fcc&Ni,Cr,Fe:Va;0) 298.15      -119000; 6000 N !
+    Parameter MQ(Fcc&Ni,Cr,Fe,Ni:Va;0) 298.15      +1840000; 6000 N !
+    Parameter MQ(Fcc&Ni,Cr,Fe,Ni:Va;1) 298.15      +670000; 6000 N !
+    Parameter MQ(Fcc&Ni,Cr,Fe,Ni:Va;2) 298.15      -1120000; 6000 N !
+    Parameter MQ(Fcc&Cr,Cr,Ni:Va;0) 298.15      -68000; 6000 N !
+    Parameter MQ(Fcc&Ni,Cr,Ni:Va;0) 298.15      -81000; 6000 N !
+    Parameter MQ(Fcc&Fe,Fe,Ni:Va;0) 298.15      -115000+104*T; 6000 N !
+    Parameter MQ(Fcc&Fe,Fe,Ni:Va;1) 298.15      +78800-73.3*T; 6000 N !
+    Parameter MQ(Fcc&Ni,Fe,Ni:Va;0) 298.15      +124000-51.4*T; 6000 N !
+    Parameter MQ(Fcc&Ni,Fe,Ni:Va;1) 298.15      -300000+213*T; 6000 N !
+
+Phase Hcp %b 2 1 0.5 !
+Constituent Hcp :Cr,Fe,Ni:Va:!
+    Parameter G(Hcp,Cr:Va;0) 298.15   +GHCPCR; 6000 N !
+    Parameter G(Hcp,Fe:Va;0) 298.15   +GHCPFE; 6000 N !
+    Parameter G(Hcp,Ni:Va;0) 298.15   +GHCPNI; 3000 N !
+    Parameter G(Hcp,Cr,Fe:Va;0) 298.15   +10833-7.477*T; 6000 N !
+    Parameter G(Hcp,Fe,Ni:Va;0) 298.15   -12054.355+3.27413*T; 6000 N !
+    Parameter G(Hcp,Fe,Ni:Va;1) 298.15   +11082-4.45077*T; 6000 N !
+    Parameter G(Hcp,Fe,Ni:Va;2) 298.15   -725.8; 6000 N !
+    Parameter BMAGN(Hcp,Ni:Va;0) 298.15   +0.52; 6000 N !
+    Parameter BMAGN(Hcp,Cr:Va;0) 298.15   -2.46; 6000 N !
+    Parameter TC(Hcp,Cr:Va;0) 298.15   -1109; 6000 N !
+    Parameter TC(Hcp,Ni:Va;0) 298.15   +633; 6000 N !
+
+Phase Sigma % 3 8 4 18 !
+Constituent Sigma :Fe,Ni:Cr:Cr,Fe,Ni:!
+    Parameter G(Sigma,Fe:Cr:Cr;0) 298.15   +8*GFCCFE+22*GHSERCR+92300-95.96*T; 6000 N !
+    Parameter G(Sigma,Fe:Cr:Fe;0) 298.15   +8*GFCCFE+4*GHSERCR+18*GHSERFE+117300-95.96*T; 6000 N !
+    Parameter G(Sigma,Fe:Cr:Ni;0) 298.15   +8*GFCCFE+4*GHSERCR+18*GBCCNI+175000; 6000 N !
+    Parameter G(Sigma,Ni:Cr:Cr;0) 298.15   +8*GHSERNI+22*GHSERCR+220000-225*T; 6000 N !
+    Parameter G(Sigma,Ni:Cr:Fe;0) 298.15   +8*GHSERNI+4*GHSERCR+18*GHSERFE-50000; 6000 N !
+    Parameter G(Sigma,Ni:Cr:Ni;0) 298.15   +8*GHSERNI+4*GHSERCR+18*GBCCNI+175000; 6000 N !
