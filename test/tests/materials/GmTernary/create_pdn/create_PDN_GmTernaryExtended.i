@@ -33,9 +33,13 @@
    X2=X2
    TK=TK
    outputs='exodus'
-   x1_avg=x1_avg
-   x2_avg=x2_avg
-   TK_avg=TK_avg
+   x1_avg=0.2
+   x2_avg=0.6
+   TK_avg=973.15
+   scale_Gnormal = '50e3'  # j/mol
+   scale_Bnormal = '1e-24'  # mol.m^2/(j.s)
+   scale_Vm      = '1e-5' # m^3/mol
+   scale_lo      = '3e-9' # m 
    []
 []
 [Kernels]
