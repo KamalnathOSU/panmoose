@@ -128,7 +128,7 @@ int count=0; m_args.num_sdk_config=3;
 	m_wrapper->num_thread = 1;
 
 // Set therm_set_temp for more than one phase
-	m_wrapper->therm_set_temp[0] = 1000;
+	m_wrapper->therm_set_temp[0] = _pps_TK_avg;
 	m_wrapper->therm_set_temp[1] = 900;
 	m_wrapper->num_therm_set = 2;
 
