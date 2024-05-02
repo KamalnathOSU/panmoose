@@ -86,7 +86,7 @@ Set_PFM_SDK_Mode(&m_args,SDK_mode);
 
 // PDN config
 map<string,double> m_pdn_config;
-m_pdn_config["x"] = 0.01;
+m_pdn_config["x"] = 0.005;
 m_pdn_config["T"] = 5.0;
 m_pdn_config["f"] = 0.01;
 int count=0; m_args.num_sdk_config=3;
@@ -213,20 +213,21 @@ GmTernaryExtended::computeQpProperties()
   _dGdX2[_qp] = (output.mu[1] - mu_ref) / _Gnormal ;
 
 //Second derivative
-
   {int engine_id=0;
   _d2GdX1X1[_qp] = cal_d2G(output,engine_id,0,0) / _Gnormal;
   _d2GdX1X2[_qp] = cal_d2G(output,engine_id,0,1) / _Gnormal;
   _d2GdX2X2[_qp] = cal_d2G(output,engine_id,1,1) / _Gnormal;
   }
 
+	{
 // Chemical mobility
 	Real M1=_Mob1, M2=_Mob2, M3=_Mob3;
-	
+	Real X1=_pps_x1_avg,X2=_pps_x2_avg;
+	Real X3=1.0-X1-X2;
 	_Mob11[_qp] = 1/_Vm*( X1*M1*(1-X1)*(1-X1) + X2*M2*(0-X1)*(0-X1) + (1.0-X1-X2)*M3*(0-X1)*(0-X1) );
 	_Mob12[_qp] = 1/_Vm*( X1*M1*(1-X1)*(0-X2) + X2*M2*(0-X1)*(1-X2) + (1.0-X1-X2)*M3*(0-X1)*(0-X2) );
 	_Mob22[_qp] = 1/_Vm*( X1*M1*(0-X2)*(0-X2) + X2*M2*(1-X2)*(1-X2) + (1.0-X1-X2)*M3*(0-X2)*(0-X2) );
-	
+	}
 	_Mob11[_qp] *= _Vm / _Bnormal;
 	_Mob12[_qp] *= _Vm / _Bnormal;
 	_Mob22[_qp] *= _Vm / _Bnormal;
