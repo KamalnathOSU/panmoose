@@ -73,6 +73,6 @@ MySplitCHParsed::computeQpOffDiagJacobian(unsigned int jvar)
   // get the coupled variable jvar is referring to
   const unsigned int cvar = mapJvarToCvar(jvar);
 
-	std::cout<<"Calling Jacobian,off-diag:"<<std::endl;
+	std::cout<<"Calling Jacobian,off-diag:"<< (*_d2Fdcdarg[cvar])[_qp] <<std::endl;
   return (*_d2Fdcdarg[cvar])[_qp] * _phi[_j][_qp] * _test[_i][_qp];
 }
