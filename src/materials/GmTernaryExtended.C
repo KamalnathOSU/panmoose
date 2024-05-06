@@ -61,12 +61,12 @@ GmTernaryExtended::GmTernaryExtended(const InputParameters & parameters)
   _X1_name(getVar("X1", 0)->name()),
   _X2_name(getVar("X2", 0)->name()),
   _TK_name(getVar("TK", 0)->name()),
-  _G(declareProperty<Real>("f_name")),
-  _dGdX1(declarePropertyDerivative<Real>("f_name", _X1_name)),
-  _dGdX2(declarePropertyDerivative<Real>("f_name", _X2_name)),
-  _d2GdX1X1(declarePropertyDerivative<Real>("f_name", _X1_name, _X1_name)),
-  _d2GdX1X2(declarePropertyDerivative<Real>("f_name", _X1_name, _X2_name)),
-  _d2GdX2X2(declarePropertyDerivative<Real>("f_name", _X2_name, _X2_name)),
+  _G(declareProperty<Real>(getParam<MaterialPropertyName>("f_name"))),
+  _dGdX1(declarePropertyDerivative<Real>(getParam<MaterialPropertyName>("f_name"), _X1_name)),
+  _dGdX2(declarePropertyDerivative<Real>(getParam<MaterialPropertyName>("f_name"), _X2_name)),
+  _d2GdX1X1(declarePropertyDerivative<Real>(getParam<MaterialPropertyName>("f_name"), _X1_name, _X1_name)),
+  _d2GdX1X2(declarePropertyDerivative<Real>(getParam<MaterialPropertyName>("f_name"), _X1_name, _X2_name)),
+  _d2GdX2X2(declarePropertyDerivative<Real>(getParam<MaterialPropertyName>("f_name"), _X2_name, _X2_name)),
   _Mob11(declareProperty<Real>("mobility11")),
   _Mob12(declareProperty<Real>("mobility12")),
   _Mob22(declareProperty<Real>("mobility22")),
@@ -140,7 +140,7 @@ int count=0; m_args.num_sdk_config=3;
 	m_wrapper->num_thread = 1;
 
 // Set therm_set_temp for more than one phase
-	m_wrapper->therm_set_temp[0] = 1000;
+	m_wrapper->therm_set_temp[0] = _pps_TK_avg;
 	m_wrapper->therm_set_temp[1] = 900;
 	m_wrapper->num_therm_set = 2;
 
@@ -183,9 +183,11 @@ int count=0; m_args.num_sdk_config=3;
 	cout<<"Calculated global point: (x1,x2,TK) :"<<"("<<_pps_x1_avg
 												<<","<<_pps_x2_avg
 												<<","<<TK<<")"<<endl;
-	cout<<" Mobility M1 "<<_Mob1<<endl;
-	cout<<" Mobility M2 "<<_Mob2<<endl;
-	cout<<" Mobility M3 "<<_Mob3<<endl;
+	cout<<" Mobility M1: "<<_Mob1<<endl;
+	cout<<" Mobility M2: "<<_Mob2<<endl;
+	cout<<" Mobility M3: "<<_Mob3<<endl;
+	cout<<"Non-dimensional w1: " << (output.mu[0]-output.mu[_ncomp-1])/_Gnormal << endl;
+	cout<<"Non-dimensional w2: " << (output.mu[1]-output.mu[_ncomp-1])/_Gnormal << endl;
 }//end of constructor
 
 void
