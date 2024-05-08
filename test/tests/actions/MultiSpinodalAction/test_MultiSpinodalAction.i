@@ -11,7 +11,7 @@ Bnormal='1e-23' # mol.m^2/(s.J)
 Vm='1e-5' # m^3/mol
 
 interval=20
-num_steps=2000
+num_steps=2
 dt='0.01'
 [Mesh]
   type = GeneratedMesh
@@ -21,18 +21,13 @@ dt='0.01'
   xmax = 32
 []
 
+[Panmoose]
+   elements='Fe Cr Ni'
+   f_name='F'
+   Temperature_in_Kelvin = '${Temperature}'
+[]
+
 [Variables]
-  [./xFe] # Fe Mole fraction 
-  [../]
-  [./xCr] # Cr Mole fraction
-  [../]
-  [./w1]
-  [../]
-  [./w2]
-  [../]
-  [./TK]
-          initial_condition = ${Temperature}
-  [../]
 []
 
 [AuxVariables]
@@ -59,12 +54,12 @@ dt='0.01'
    [../]
    [./w1_initial]
      type = ConstantIC
-     variable=w1
+     variable=wFe
      value=-0.0248
    [../]
    [./w2_initial]
      type = ConstantIC
-     variable=w2
+     variable=wCr
      value=0.288
    [../]
 []
@@ -83,18 +78,18 @@ dt='0.01'
     variable = xFe
     f_name = 'F'
     kappa_name = 'kappa1_c'
-    w = w1
+    w = wFe
     coupled_variables = 'xCr'
   [../]
   [./w11_res]
     type = SplitCHWRes
-    variable = w1
+    variable = wFe
     mob_name = 'mobility11'
   [../]
   [./w12_res]
     type = SplitCHWRes
-    variable = w1
-    w = w2
+    variable = wFe
+    w = wCr
     mob_name = 'mobility12'
   [../]
 
@@ -103,34 +98,30 @@ dt='0.01'
     variable = xCr
     f_name = 'F'
     kappa_name = 'kappa2_c'
-    w = w2
+    w = wCr
     coupled_variables = 'xFe'
   [../]
   [./w22_res]
     type = SplitCHWRes
-    variable = w2
+    variable = wCr
     mob_name = 'mobility22'
   [../]
   [./w21_res]
     type = SplitCHWRes
-    variable = w2
-    w = w1
+    variable = wCr
+    w = wFe
     mob_name = 'mobility12'
   [../]
 
   [./time1]
     type = CoupledTimeDerivative
-    variable = w1
+    variable = wFe
     v = xFe
   [../]
   [./time2]
     type = CoupledTimeDerivative
-    variable = w2
+    variable = wCr
     v = xCr
-  [../]
-  [./TK_evo]
-    type = TimeDerivative
-    variable = TK
   [../]
 []
 
