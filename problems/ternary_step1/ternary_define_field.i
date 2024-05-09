@@ -10,9 +10,9 @@ Gnormal='50e3' # J/mol
 Bnormal='1e-23' # mol.m^2/(s.J)
 Vm='1e-5' # m^3/mol
 
-interval=50
-num_steps=1000
-dt='10'
+interval=20
+num_steps=2000
+dt='0.01'
 [Mesh]
   type = GeneratedMesh
   dim = 2
@@ -22,7 +22,6 @@ dt='10'
   xmax = 32
   ymin = 0
   ymax = 32
-  elem_type = QUAD4
 []
 
 [Variables]
@@ -44,6 +43,10 @@ dt='10'
                 order = CONSTANT
                 family = MONOMIAL
         [../]
+        [./xNi]
+                order = FIRST
+                family = LAGRANGE
+        [../]
 []
 
 [ICs]
@@ -58,18 +61,18 @@ dt='10'
     type = RandomIC
     min=${fparse xCr_avg-0.0001}
     max=${fparse xCr_avg+0.0001}
-    seed=210
+    seed=211
     variable=xCr
    [../]
    [./w1_initial]
      type = ConstantIC
      variable=w1
-     value=0.1284
+     value=-0.0248
    [../]
    [./w2_initial]
      type = ConstantIC
      variable=w2
-     value=0.5962
+     value=0.288
    [../]
 []
 
@@ -146,6 +149,12 @@ dt='10'
                 kappa_names='kappa1_c kappa2_c'
                 interfacial_vars='xFe xCr'
         [../]
+        [./xNi]
+                type = ParsedAux
+                variable = xNi
+                coupled_variables = 'xFe xCr'
+                expression = '1.0 - xFe - xCr'
+        [../]
 []
 
 [Materials]
@@ -167,7 +176,7 @@ dt='10'
    scale_Bnormal = ${Bnormal}  # mol.m^2/(J.s)
    scale_Vm      = ${Vm} # m^3/mol
    scale_lo      = ${lo} # m 
-   kappa         = 11.25e-10
+   kappa         = 11.25e-9
    [../]
 []
 
@@ -190,13 +199,19 @@ dt='10'
                          ilu             1'
 
   l_max_its = 30
-  l_tol = 1.0e-4
+  #l_tol = 1.0e-4
   nl_rel_tol = 1.0e-6
-  nl_abs_tol = 1e-10
+  nl_abs_tol = 1e-20
   start_time = 0.0
   num_steps = ${num_steps}
 
-  dt = ${dt}
+  [./TimeStepper]
+    type = IterationAdaptiveDT
+    dt = ${dt}
+    cutback_factor = 0.5
+    growth_factor = 1.2
+    optimal_iterations = 3
+  [../]
 []
 
 [Postprocessors]
@@ -206,6 +221,13 @@ dt='10'
         [./total_free_energy]
                 type = ElementIntegralVariablePostprocessor
                 variable = Ft
+        [../]
+        [./CPU_time]
+                type=TimePostprocessor
+                execute_on='INITIAL TIMESTEP_END'
+        [../]
+        [./_dt]
+                type=TimestepSize
         [../]
 []
 
