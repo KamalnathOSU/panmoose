@@ -29,6 +29,10 @@ panmooseApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
   Registry::registerActionsTo(af, {"panmooseApp"});
 
   /* register custom execute flags, action syntax, etc. here */
+	registerSyntaxTask("MultiSpinodalAction","Panmoose","add_kernel");
+	registerSyntaxTask("MultiSpinodalAction","Panmoose","add_variable");
+	registerSyntaxTask("MultiSpinodalAction","Panmoose","add_aux_kernel");
+	registerSyntaxTask("MultiSpinodalAction","Panmoose","add_aux_variable");
 }
 
 void
