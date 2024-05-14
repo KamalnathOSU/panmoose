@@ -27,8 +27,6 @@ dt='0.01'
    Temperature_in_Kelvin = '${Temperature}'
 []
 
-[Variables]
-[]
 
 [AuxVariables]
         [./Ft]
