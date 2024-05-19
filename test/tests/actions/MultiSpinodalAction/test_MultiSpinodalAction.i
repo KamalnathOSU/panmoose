@@ -70,59 +70,6 @@ dt='0.01'
         [../]
 []
 
-[Kernels]
-  [./c1_res]
-    type = SplitCHParsed
-    variable = xFe
-    f_name = 'F'
-    kappa_name = 'kappa1_c'
-    w = wFe
-    coupled_variables = 'xCr'
-  [../]
-  [./w11_res]
-    type = SplitCHWRes
-    variable = wFe
-    mob_name = 'mobility11'
-  [../]
-  [./w12_res]
-    type = SplitCHWRes
-    variable = wFe
-    w = wCr
-    mob_name = 'mobility12'
-  [../]
-
-  [./c2_res]
-    type = SplitCHParsed
-    variable = xCr
-    f_name = 'F'
-    kappa_name = 'kappa2_c'
-    w = wCr
-    coupled_variables = 'xFe'
-  [../]
-  [./w22_res]
-    type = SplitCHWRes
-    variable = wCr
-    mob_name = 'mobility22'
-  [../]
-  [./w21_res]
-    type = SplitCHWRes
-    variable = wCr
-    w = wFe
-    mob_name = 'mobility12'
-  [../]
-
-  [./time1]
-    type = CoupledTimeDerivative
-    variable = wFe
-    v = xFe
-  [../]
-  [./time2]
-    type = CoupledTimeDerivative
-    variable = wCr
-    v = xCr
-  [../]
-[]
-
 [AuxKernels]
         [./compute_Ft]
                 type=TotalFreeEnergy
