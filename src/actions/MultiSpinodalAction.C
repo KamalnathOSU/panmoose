@@ -163,48 +163,77 @@ MultiSpinodalAction::act()
   //
   else if (_current_task == "add_kernel")
 {
-				/*
+				
 	// Add time derivative kernel
 	{
+		for(int ic=0; ic<ncomp-1; ic++){
 		std::string kernel_type = "CoupledTimeDerivative";
-	
-		std::string kernel_name = _var_name + "_" + kernel_type;
+		NonlinearVariableName var_name = _x_prefix + m_components[ic] ;
+		NonlinearVariableName wvar_name = _w_prefix + m_components[ic] ;
+		std::string kernel_name = "time" + std::to_string(ic+1);
 		InputParameters params = _factory.getValidParams(kernel_type);
-		params.set<NonlinearVariableName>("variable") = _chempot_name;
-		params.set<std::vector<VariableName>>("v") = {_var_name};
+		params.set<NonlinearVariableName>("variable") = wvar_name;
+		params.set<std::vector<VariableName>>("v") = {var_name};
 		params.applyParameters(parameters());
 	
 		_problem->addKernel(kernel_type, kernel_name, params);
+		}//end of ic-loop
 	}
 	
 	// Add SplitCHWRes kernel
 	{
+		for(int ic=0; ic<ncomp-1; ic++){
+			for(int jc=0; jc<ncomp-1; jc++){
 		std::string kernel_type = "SplitCHWRes";
 	
-		std::string kernel_name = _var_name + "_" + kernel_type;
-		InputParameters params = _factory.getValidParams(kernel_type);
-		params.set<NonlinearVariableName>("variable") = _chempot_name;
-		params.set<MaterialPropertyName>("mob_name") = getParam<MaterialPropertyName>("mobility");
-		params.applyParameters(parameters());
-	
-		_problem->addKernel(kernel_type, kernel_name, params);
+		std::string kernel_name = _w_prefix + std::to_string(ic+1)
+											+ std::to_string(jc+1)
+											+ "_" + "res";
+		NonlinearVariableName var_name = _w_prefix + m_components[ic];
+		InputParameters var_params = _factory.getValidParams(kernel_type);
+		var_params.set<NonlinearVariableName>("variable") = var_name;
+		if(ic<=jc)
+			var_params.set<MaterialPropertyName>("mob_name") = getParam<std::string>("prefix_mobility")
+																+std::to_string(ic+1)
+																+std::to_string(jc+1);
+		else
+			var_params.set<MaterialPropertyName>("mob_name") = getParam<std::string>("prefix_mobility")
+																+std::to_string(jc+1)
+																+std::to_string(ic+1);													
+		if(ic !=jc){
+		var_params.set<std::vector<VariableName>>("w") = { _w_prefix + m_components[jc]};
+		}//ic!=jc
+		var_params.applyParameters(parameters());
+		_problem->addKernel(kernel_type, kernel_name, var_params);
+			}//end of jc-loop
+		}//end of ic-loop
+		
 	}
 	
+
 	// Add SplitCHParsed kernel
 	{
+		for(int ic=0; ic<ncomp-1;ic++){
 		std::string kernel_type = "SplitCHParsed";
-	
-		std::string kernel_name = _var_name + "_" + kernel_type;
-		InputParameters params = _factory.getValidParams(kernel_type);
-		params.set<NonlinearVariableName>("variable") = _var_name;
-		params.set<std::vector<VariableName>>("w") = {_chempot_name};
-		params.set<MaterialPropertyName>("f_name") =
-				getParam<MaterialPropertyName>("free_energy");
-		params.set<MaterialPropertyName>("kappa_name") = getParam<MaterialPropertyName>("kappa");
-		params.applyParameters(parameters());
-	
-		_problem->addKernel(kernel_type, kernel_name, params);
+		NonlinearVariableName var_name = _x_prefix + m_components[ic];
+		NonlinearVariableName wvar_name = _w_prefix + m_components[ic] ;
+		std::string kernel_name = var_name + "_" + kernel_type;
+		InputParameters var_params = _factory.getValidParams(kernel_type);
+		var_params.set<NonlinearVariableName>("variable") = var_name;
+		var_params.set<std::vector<VariableName>>("w") = {wvar_name};
+		var_params.set<MaterialPropertyName>("kappa_name") = getParam<std::string>("prefix_kappa") + std::to_string(ic+1) + "_c" ;
+		//Create coupled_variable vector
+			{
+				std::vector<VariableName> newVector;
+				for(int jc=0; jc<ncomp-1; jc++)
+					if(jc != ic)
+						newVector.push_back( _x_prefix+m_components[jc] );
+		var_params.set<std::vector<VariableName>>("coupled_variables") = newVector;
+			}		
+		var_params.applyParameters(parameters());
+		_problem->addKernel(kernel_type, kernel_name, var_params);
+		}
 	}
-			*/	
+				
   }//end of add_kernels
 }//end of act()
