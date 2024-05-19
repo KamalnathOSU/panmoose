@@ -24,7 +24,7 @@ GmTernaryExtended::validParams()
   params.addParam<PostprocessorName>("x1_avg",0.33,"The average of X1 concentration field.");
   params.addParam<PostprocessorName>("x2_avg",0.33,"The average of X2 concentration field.");
   params.addParam<PostprocessorName>("TK_avg",1000,"The average temperature of the field.");
-  
+  params.addParam<bool>("compute_localCPU_time",false,"Calculate PDN CPU time locally in the material.");
   return params;
 }
 
@@ -35,11 +35,15 @@ GmTernaryExtended::~GmTernaryExtended()
 		Delete_PFM_SDK( _m_pfm_sdk );
 		_m_pfm_sdk = NULL;
 	}
+	if(_compute_local_CPU_time){
+		cout<<" PDN time from Material object : "<<_cpu_time/1e6<<" sec"<<endl;	
+	}
 	//~DerivativeMaterialInterface<Material>();
   }
 
 GmTernaryExtended::GmTernaryExtended(const InputParameters & parameters)
   : DerivativeMaterialInterface<Material>(parameters),
+    _compute_local_CPU_time(getParam<bool>("compute_localCPU_time")),
     _phase_name(getParam<std::string>("phase_name")),
 	_database_name(getParam<FileName>("database_name")),
 	_database_type(getParam<std::string>("database_type")),
@@ -76,6 +80,7 @@ GmTernaryExtended::GmTernaryExtended(const InputParameters & parameters)
 	_m_pfm_sdk = NULL;
 	_ncomp = 0;
 	_initialize_mobility = false;
+	_cpu_time = 0.0;
   using namespace std;
 //Input for PanDataNet
 PF_ARGS m_args;
@@ -204,8 +209,15 @@ GmTernaryExtended::computeQpProperties()
   
   //Declare memory for PFM_SDK output data
   PFM_SDK_Output_Data output;
-  calculate_local_eq(conc_vector,T,output);
-
+  {
+	auto start_time = std::chrono::high_resolution_clock::now();
+  	calculate_local_eq(conc_vector,T,output);
+  	auto end_time = std::chrono::high_resolution_clock::now();
+  	auto elaspsed_time=std::chrono::duration_cast<std::chrono::microseconds>(end_time-start_time).count();
+	if(_compute_local_CPU_time)
+		_cpu_time += elaspsed_time;
+  }
+  
 //Free energy
   _G[_qp] = output.phase_Gibbs_energy[0] / _Gnormal ;
 

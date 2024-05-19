@@ -12,6 +12,7 @@
 
 #include "pfm_sdk.h"
 #include "PanPhaseFieldArguments.h"
+#include <chrono>
 class GmTernaryExtended : public DerivativeMaterialInterface<Material>
 {
 public:
@@ -21,7 +22,7 @@ public:
 
 protected:
   virtual void computeQpProperties();
-  
+  const bool & _compute_local_CPU_time;
   const std::string & _phase_name;
   const FileName &    _database_name;
   const std::string &   _database_type;
@@ -61,6 +62,7 @@ protected:
   MaterialProperty<Real> & _kappa2_c;
 	
 private:
+  Real _cpu_time;
   Real  _Mob1;
   Real  _Mob2;
   Real  _Mob3;
