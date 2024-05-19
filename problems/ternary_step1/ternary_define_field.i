@@ -177,6 +177,7 @@ dt='0.01'
    scale_Vm      = ${Vm} # m^3/mol
    scale_lo      = ${lo} # m 
    kappa         = 11.25e-9
+   compute_localCPU_time = true
    [../]
 []
 
