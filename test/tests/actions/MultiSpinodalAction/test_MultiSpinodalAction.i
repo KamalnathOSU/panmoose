@@ -124,10 +124,6 @@ dt='0.01'
         [./iterations]
                 type = NumNonlinearIterations
         [../]
-        [./total_free_energy]
-                type = ElementIntegralVariablePostprocessor
-                variable = Ft
-        [../]
 []
 
 [Outputs]
