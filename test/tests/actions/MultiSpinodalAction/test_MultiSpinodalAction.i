@@ -28,13 +28,6 @@ dt='0.01'
 []
 
 
-[AuxVariables]
-        [./Ft]
-                order = CONSTANT
-                family = MONOMIAL
-        [../]
-[]
-
 [ICs]
  [./c1_initial]
   type = RandomIC
@@ -67,16 +60,6 @@ dt='0.01'
                 [./c_bcs]
                         auto_direction = 'x'
                 [../]
-        [../]
-[]
-
-[AuxKernels]
-        [./compute_Ft]
-                type=TotalFreeEnergy
-                variable = Ft
-                f_name='F'
-                kappa_names='kappa1_c kappa2_c'
-                interfacial_vars='xFe xCr'
         [../]
 []
 
