@@ -45,6 +45,8 @@ MultiSpinodalAction::validParams()
 	params.addParam<std::string>("prefix_x","x","Prefix of the non-linear composition variable.");
 	params.addParam<std::string>("prefix_w","w","Prefix of the non-linear variational derivative variable.");
 	params.addParam<bool>("add_Temperature",true,"Add temperature field (TK) as a auxiliary variable. ");
+	params.addParam<bool>("compute_total_energy",true,"Calculate total free energy in 'Ft' auxiliary variable."
+							" 'Ft' auxiliary variable is automatically added.");
 	params.addParam<std::string>("Temperature_in_Kelvin","100","Value of the temperature field in Kelvin scale.");
   return params;
 }
@@ -54,6 +56,7 @@ MultiSpinodalAction::MultiSpinodalAction(const InputParameters & params)
 	_x_prefix(getParam<std::string>("prefix_x")),
 	_w_prefix(getParam<std::string>("prefix_w")),
 	_add_aux_TK(getParam<bool>("add_Temperature")),
+	_compute_Ft(getParam<bool>("compute_total_energy")),
     _scaling(getParam<Real>("scaling"))
 {
       _fe_type = FEType(Utility::string_to_enum<Order>("FIRST"),
@@ -98,13 +101,24 @@ MultiSpinodalAction::act()
 			InputParameters var_params = _factory.getValidParams("MooseVariable");
 			NonlinearVariableName _var_name = "TK";
 			//Set parameters
-      var_params.set<MooseEnum>("family") = Moose::stringify(_fe_type.family);
-      var_params.set<MooseEnum>("order") = _fe_type.order.get_order();
-      var_params.set<std::vector<Real>>("scaling") = {_scaling};
-      var_params.applySpecificParameters(parameters(), {"block"});
+			var_params.set<MooseEnum>("family") = Moose::stringify(_fe_type.family);
+			var_params.set<MooseEnum>("order") = _fe_type.order.get_order();
+			var_params.set<std::vector<Real>>("scaling") = {_scaling};
+			var_params.applySpecificParameters(parameters(), {"block"});
 			//Create aux variable
 			_problem->addAuxVariable("MooseVariable",_var_name, var_params);
 		}//end of _add_aux_TK
+		if(_compute_Ft){
+			InputParameters var_params = _factory.getValidParams("MooseVariable");
+			NonlinearVariableName _var_name = "Ft";
+			//Set parameters
+			var_params.set<MooseEnum>("family") = "MONOMIAL";
+			var_params.set<MooseEnum>("order") = "CONSTANT";
+			var_params.set<std::vector<Real>>("scaling") = {_scaling};
+			var_params.applySpecificParameters(parameters(), {"block"});
+			//Create aux variable
+			_problem->addAuxVariable("MooseVariable",_var_name, var_params);
+		}//end of _compute_Ft
 		//Add dependent concentration variable
     {
 			InputParameters var_params = _factory.getValidParams("MooseVariable");
@@ -133,6 +147,25 @@ MultiSpinodalAction::act()
 		var_params.set<bool>("use_xyzt") = true;
 		_problem->addAuxKernel(type,"compute_" + std::string(var_name) ,var_params);
 		}//end of temperature aux kernel
+
+		if(_compute_Ft){
+		auto type = "TotalFreeEnergy";auto var_name="Ft";
+		InputParameters var_params = _factory.getValidParams(type);
+		var_params.set<ExecFlagEnum>("execute_on") = {EXEC_INITIAL, EXEC_TIMESTEP_END};
+		var_params.set<AuxVariableName>("variable") = var_name;
+		var_params.set<MaterialPropertyName>("f_name") = getParam<MaterialPropertyName>("f_name");
+		{
+			std::vector<MaterialPropertyName> kappa_names;
+			std::vector<VariableName> interfacial_vars;
+		for(unsigned int ic=0; ic<ncomp-1; ic++){
+			kappa_names.push_back( getParam<std::string>("prefix_kappa") + std::to_string(ic+1) + "_c" ) ;
+			interfacial_vars.push_back( _x_prefix + m_components[ic] );
+		}
+		var_params.set<std::vector<MaterialPropertyName>>("kappa_names") = kappa_names;
+		var_params.set<std::vector<VariableName>>("interfacial_vars") = interfacial_vars ;
+		}
+		_problem->addAuxKernel(type,"compute_" + std::string(var_name) ,var_params);
+		}//end of _compute_Ft
 
 		// Calculate dependent concentration variable
 		{
@@ -235,5 +268,18 @@ MultiSpinodalAction::act()
 		}
 	}
 				
-  }//end of add_kernels
+}//end of add_kernels
+  else if (_current_task == "add_postprocessor")
+{
+	if(_compute_Ft){
+		std::string type = "ElementIntegralVariablePostprocessor";
+		VariableName var_name = "Ft";
+		std::string pp_name = "total_free_energy";
+
+		InputParameters var_params = _factory.getValidParams(type);
+		var_params.set<std::vector<VariableName>>("variable") = {var_name};
+		var_params.set<ExecFlagEnum>("execute_on") = {EXEC_INITIAL, EXEC_TIMESTEP_END};
+		_problem->addUserObject(type, pp_name, var_params);
+	}
+}//end of add_postprocessor
 }//end of act()

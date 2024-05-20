@@ -33,6 +33,7 @@ panmooseApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
 	registerSyntaxTask("MultiSpinodalAction","Panmoose","add_variable");
 	registerSyntaxTask("MultiSpinodalAction","Panmoose","add_aux_kernel");
 	registerSyntaxTask("MultiSpinodalAction","Panmoose","add_aux_variable");
+  registerSyntaxTask("MultiSpinodalAction","Panmoose","add_postprocessor");
 }
 
 void

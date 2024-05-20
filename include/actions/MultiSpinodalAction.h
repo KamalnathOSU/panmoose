@@ -20,6 +20,7 @@ protected:
 	const std::string &  _w_prefix;
 
 	const bool & _add_aux_TK;
+  const bool & _compute_Ft;
   /// FEType for the variable being created
   FEType _fe_type;
   /// Scaling parameter
